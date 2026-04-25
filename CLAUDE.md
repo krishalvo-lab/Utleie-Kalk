@@ -1,0 +1,1 @@
+ikke gjør endringer før jeg bekrefter at du skal gjøre det

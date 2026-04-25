@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Utleiekalkulator V3</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f1115;
+    color: #e6e6e6;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  h2 { margin: 24px 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #888; font-weight: 600; }
+  h3 { margin: 16px 0 8px; font-size: 14px; color: #ccc; font-weight: 600; }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  .tagline { color: #888; margin-bottom: 24px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 400px 1fr; gap: 24px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: #1a1d24;
+    border: 1px solid #2a2e38;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .subcard {
+    background: #14171d;
+    border: 1px solid #252933;
+    border-radius: 6px;
+    padding: 14px;
+    margin-top: 10px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 4px;
+    margin-top: 10px;
+  }
+  h2 + label, h3 + label { margin-top: 0; }
+  input[type=number], input[type=text] {
+    width: 100%;
+    padding: 9px 11px;
+    background: #0f1115;
+    border: 1px solid #2a2e38;
+    border-radius: 6px;
+    color: #e6e6e6;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input:focus { outline: none; border-color: #4a7dff; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .check input { width: auto; }
+  .check label { margin: 0; font-size: 14px; color: #ccc; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  .col-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #2a2e38;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .col-title.after { color: #6ea8ff; }
+
+  .result {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #232731;
+    font-size: 13.5px;
+    gap: 10px;
+  }
+  .result:last-child { border-bottom: none; }
+  .result .label { color: #888; font-size: 12.5px; }
+  .result .value { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .value.positive { color: #4ade80; }
+  .value.negative { color: #f87171; }
+  .value.neutral  { color: #fbbf24; }
+  .result.big .value { font-size: 15px; }
+
+  .verdict {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .verdict.good { background: #0f3a21; color: #4ade80; border: 1px solid #1f5f35; }
+  .verdict.warn { background: #3a2e0f; color: #fbbf24; border: 1px solid #5f4b1f; }
+  .verdict.bad  { background: #3a0f14; color: #f87171; border: 1px solid #5f1f26; }
+  .verdict .title { font-size: 20px; margin-bottom: 8px; }
+  .verdict .reason { font-weight: 400; font-size: 13px; opacity: 0.9; margin-top: 10px; text-align: left; }
+  .verdict .reason li { margin: 4px 0; list-style: none; padding-left: 18px; position: relative; }
+  .verdict .reason li::before { content: "•"; position: absolute; left: 4px; }
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #4a7dff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  button:hover { background: #3d6bdd; }
+  .note { font-size: 11.5px; color: #666; margin-top: 4px; line-height: 1.4; }
+  details summary { cursor: pointer; color: #6ea8ff; font-size: 13px; margin: 12px 0 8px; user-select: none; }
+  details[open] summary { margin-bottom: 12px; }
+  table.yoy {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.yoy th, table.yoy td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #232731; }
+  table.yoy th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.5px; }
+  table.yoy td.yr { color: #6ea8ff; text-align: left; font-weight: 600; }
+  table.yoy td.neg { color: #f87171; }
+  table.yoy td.pos { color: #4ade80; }
+
+  textarea {
+    width: 100%;
+    padding: 9px 11px;
+    background: #0f1115;
+    border: 1px solid #2a2e38;
+    border-radius: 6px;
+    color: #e6e6e6;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 90px;
+  }
+  textarea:focus { outline: none; border-color: #4a7dff; }
+  button.secondary {
+    background: #2a3040;
+    margin-top: 8px;
+    padding: 9px 14px;
+    width: auto;
+    font-size: 13px;
+  }
+  button.secondary:hover { background: #343b4d; }
+  .finn-box {
+    margin-bottom: 16px;
+    border: 1px solid #2a2e38;
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #14171d;
+  }
+  .finn-box summary { color: #6ea8ff; font-size: 13px; font-weight: 600; }
+  .finn-preview .prow {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #232731;
+    font-size: 12.5px;
+  }
+  .finn-preview .prow:last-child { border-bottom: none; }
+  .finn-preview .hit  { color: #4ade80; font-variant-numeric: tabular-nums; }
+  .finn-preview .miss { color: #666; }
+
+  .mode-switch {
+    display: flex;
+    background: #14171d;
+    border: 1px solid #2a2e38;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 16px;
+    gap: 4px;
+  }
+  .mode-switch button {
+    flex: 1;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 0;
+    font-size: 13px;
+    width: auto;
+  }
+  .mode-switch button.active {
+    background: #4a7dff;
+    color: white;
+  }
+  .mode-switch button:hover:not(.active) { background: #1c2028; color: #ccc; }
+  .bo-selv-only { display: none; }
+  body.mode-bo-selv .bo-selv-only { display: block; }
+  body.mode-bo-selv .ren-utleie-only { display: none; }
+  .skattefri-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #0f3a21;
+    color: #4ade80;
+    border: 1px solid #1f5f35;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Utleiekalkulator</h1>
+  <p class="tagline">V3 — før/etter oppussing, norsk skatt, langsikt med IRR. Ingen pynt på tall.</p>
+
+  <div class="grid">
+    <!-- ============ INPUT ============ -->
+    <div class="card">
+      <div class="mode-switch" role="tablist">
+        <button type="button" id="modeRen" class="active" onclick="setMode('ren')">Ren utleiebolig</button>
+        <button type="button" id="modeBoSelv" onclick="setMode('bo-selv')">Bo selv + utleiedel</button>
+      </div>
+
+      <div class="bo-selv-only" style="margin-bottom: 16px; padding: 12px 14px; background: #14171d; border: 1px solid #2a2e38; border-radius: 6px;">
+        <h3 style="margin-top: 0;">Utleiedel</h3>
+        <label>Utleieandel (% av boligen)</label>
+        <input type="number" id="utleieandel" value="40" step="1" min="1" max="99">
+        <div class="note">Hvor stor andel av boligen leies ut. Skattemessig: under 50 % = skattefri leieinntekt. Fra 50 % og opp = vanlig utleiebeskatning.</div>
+
+        <label style="margin-top: 12px;">Skattestatus</label>
+        <div class="mode-switch" role="tablist" style="margin-bottom: 6px;">
+          <button type="button" id="taxPrimaer" class="active" onclick="setSkattestatus('primaer')">Primærbolig</button>
+          <button type="button" id="taxSekundaer" onclick="setSkattestatus('sekundaer')">Sekundærbolig</button>
+        </div>
+        <div class="note"><strong>Primær</strong>: skattefri leie hvis utleieandel &lt; 50 %, ingen gevinstskatt ved salg (etter ≥1 års botid). <strong>Sekundær</strong>: 22 % skatt på leie og gevinst.</div>
+        <div class="note" style="margin-top: 10px; color: #6ea8ff;">↓ "Leie" og "Oppussing"-feltene under skal nå representere <strong>kun utleiedelen</strong>, ikke hele boligen.</div>
+      </div>
+
+      <details class="finn-box">
+        <summary>📋 Lim inn FINN-annonse (autofyll)</summary>
+        <div class="note" style="margin: 10px 0;">Åpne annonsen på finn.no → Ctrl+A → Ctrl+C → lim inn under → trykk Parse. Fyller inn kjøpspris, felleskost, kommunale avgifter.</div>
+        <textarea id="finnText" placeholder="Lim inn tekst fra FINN-annonsen her..."></textarea>
+        <button type="button" class="secondary" onclick="parseFinnClick()">Parse og fyll inn</button>
+        <div id="finnResult" style="display:none; margin-top:12px;"></div>
+      </details>
+
+      <h2>Kjøp & finansiering</h2>
+      <label>Kjøpspris (kr)</label>
+      <input type="number" id="kjopspris" value="3500000">
+      <div class="row2">
+        <div><label>Egenkapital (kr)</label><input type="number" id="egenkapital" value="500000"></div>
+        <div><label>Rente (%)</label><input type="number" id="rente" value="5.5" step="0.1"></div>
+      </div>
+      <label>Nedbetalingstid (år)</label>
+      <input type="number" id="nedbetalingstid" value="30">
+
+      <h2>Leie</h2>
+      <label>Leie FØR oppussing (kr/mnd)</label>
+      <input type="number" id="leie" value="14000">
+      <label>Leie ETTER oppussing (kr/mnd)</label>
+      <input type="number" id="leieEtter" value="17000">
+      <label>Vakans (%)</label>
+      <input type="number" id="vakans" value="5" step="1">
+
+      <h2>Driftskostnader</h2>
+      <div class="row2">
+        <div><label>Felleskost (kr/mnd)</label><input type="number" id="felleskost" value="3000"></div>
+        <div><label>Kommunale (kr/år)</label><input type="number" id="kommunale" value="15000"></div>
+      </div>
+      <div class="row2">
+        <div><label>Forsikring (kr/år)</label><input type="number" id="forsikring" value="6000"></div>
+        <div><label>Vedlikehold (%/år)</label><input type="number" id="vedlikehold" value="1" step="0.1"></div>
+      </div>
+
+      <h2>Oppussing</h2>
+      <label>Vedlikehold — fradragsberettiget (kr)</label>
+      <input type="number" id="oppVedlikehold" value="250000">
+      <div class="note">Tilbakefør til opprinnelig standard (maling, gulv, kjøkken/bad tilsvarende det som var). Trekkes fra skattbar leieinntekt år 1 → du får 22 % tilbake med en gang.</div>
+      <label>Påkostning — oppgradering (kr)</label>
+      <input type="number" id="oppPakostning" value="50000">
+      <div class="note">Over opprinnelig standard (nytt bad der det var enkelt, ombygging, tilbygg). Legges til inngangsverdi og reduserer gevinstskatt først ved salg.</div>
+      <label>Forventet verdiøkning (kr)</label>
+      <input type="number" id="verdiokning" value="400000">
+      <label>Tid uten leie (mnd)</label>
+      <input type="number" id="monthOff" value="2" step="1">
+
+      <h2>Langsiktig marked</h2>
+      <div class="row2">
+        <div><label>Prisstigning (%/år)</label><input type="number" id="prisstigning" value="3" step="0.1"></div>
+        <div><label>Leieøkning (%/år)</label><input type="number" id="leieOkning" value="3" step="0.1"></div>
+      </div>
+      <div class="row2">
+        <div><label>Horisont (år)</label><input type="number" id="horisont" value="10" step="1"></div>
+        <div><label>Meglerkost v/salg (%)</label><input type="number" id="meglerkost" value="2" step="0.1"></div>
+      </div>
+      <div class="note">Snitt i Norge siste 20 år: prisstigning ~5 %, inflasjon ~3 %. Vær konservativ.</div>
+
+      <h2>Skatt</h2>
+      <div class="check">
+        <input type="checkbox" id="skattPa" checked>
+        <label for="skattPa">Beregn skatt (norsk sekundærbolig)</label>
+      </div>
+      <label>Skattesats kapitalinntekt (%)</label>
+      <input type="number" id="skattesats" value="22" step="0.1">
+
+      <h2>Investeringskrav</h2>
+      <div class="row2">
+        <div><label>Min yield (%)</label><input type="number" id="minYield" value="4" step="0.1"></div>
+        <div><label>Min IRR (%)</label><input type="number" id="minIRR" value="6" step="0.1"></div>
+      </div>
+      <div class="row2">
+        <div><label>Min CF (kr/mnd)</label><input type="number" id="minCashflow" value="-5000"></div>
+        <div><label>Maks belåning (%)</label><input type="number" id="maksBelaning" value="85" step="1"></div>
+      </div>
+      <div class="note">Min CF kan være negativ hvis du aksepterer månedlig tap for verdistigning.</div>
+
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 20px;">
+        <button onclick="calc()" style="margin-top: 0;">Beregn</button>
+        <button type="button" class="secondary" onclick="resetAll()" style="margin-top: 0;">Nullstill</button>
+      </div>
+    </div>
+
+    <!-- ============ RESULT ============ -->
+    <div class="card">
+      <div class="bo-selv-only" style="padding: 12px 14px; margin-bottom: 16px; background: #14171d; border: 1px solid #2a2e38; border-radius: 6px;">
+        <h3 style="margin-top: 0;">Bolig-perspektiv <span id="skattefriBadge" class="skattefri-badge" style="display:none;">SKATTEFRI</span></h3>
+        <div class="result"><span class="label">Total boligkostnad/mnd (drift + termin)</span><span class="value" id="bs_totMnd">—</span></div>
+        <div class="result"><span class="label">Leieinntekt/mnd (utleiedel)</span><span class="value" id="bs_leieMnd">—</span></div>
+        <div class="result big"><span class="label">Din netto månedlige boligutgift</span><span class="value" id="bs_nettoMnd">—</span></div>
+        <div class="result big"><span class="label">Andel av boligkost dekt av leie</span><span class="value" id="bs_dekning">—</span></div>
+        <div class="note" style="margin-top: 10px;">Tallene over viser hva du betaler ut av lomma per måned for å eie hele boligen, og hvor stor andel utleien sponser. Ikke et investeringsregnestykke — et bo-perspektiv.</div>
+      </div>
+
+      <h2>Finansiering</h2>
+      <div class="result"><span class="label">Lånebeløp</span><span class="value" id="r_lan">—</span></div>
+      <div class="result"><span class="label">Belåningsgrad</span><span class="value" id="r_belaning">—</span></div>
+      <div class="result"><span class="label">Total investert (EK + oppussing + tapt leie)</span><span class="value" id="r_ek">—</span></div>
+      <div class="result"><span class="label">Månedlig termin (annuitet)</span><span class="value" id="r_terminbelop">—</span></div>
+      <div class="result"><span class="label">Rente år 1 (fradragsberettiget)</span><span class="value" id="r_renteAr1">—</span></div>
+      <div class="result bo-selv-only"><span class="label">Andel rente belastet utleiedel</span><span class="value" id="r_renteAndel">—</span></div>
+
+      <h2>Cashflow & yield (år 1)</h2>
+      <div class="compare">
+        <div>
+          <div class="col-title">FØR oppussing</div>
+          <div class="result"><span class="label">CF /mnd</span><span class="value" id="f_cfMnd">—</span></div>
+          <div class="result"><span class="label">CF /år</span><span class="value" id="f_cfAr">—</span></div>
+          <div class="result"><span class="label">Brutto yield</span><span class="value" id="f_bruttoY">—</span></div>
+          <div class="result"><span class="label">Netto yield</span><span class="value" id="f_nettoY">—</span></div>
+          <div class="result"><span class="label">Break-even leie</span><span class="value" id="f_be">—</span></div>
+        </div>
+        <div>
+          <div class="col-title after">ETTER oppussing</div>
+          <div class="result"><span class="label">CF /mnd</span><span class="value" id="e_cfMnd">—</span></div>
+          <div class="result"><span class="label">CF /år</span><span class="value" id="e_cfAr">—</span></div>
+          <div class="result"><span class="label">Brutto yield</span><span class="value" id="e_bruttoY">—</span></div>
+          <div class="result"><span class="label">Netto yield</span><span class="value" id="e_nettoY">—</span></div>
+          <div class="result"><span class="label">Break-even leie</span><span class="value" id="e_be">—</span></div>
+        </div>
+      </div>
+
+      <h2>Skatt (etter oppussing, år 1)</h2>
+      <div class="subcard" id="skattBlokk">
+        <div class="result"><span class="label">Skattbar leieinntekt</span><span class="value" id="s_skattbar">—</span></div>
+        <div class="result"><span class="label">Skatt / besparelse år 1</span><span class="value" id="s_skatt">—</span></div>
+        <div class="result big"><span class="label">CF etter skatt /mnd</span><span class="value" id="s_cfMnd">—</span></div>
+        <div class="result"><span class="label">CF etter skatt /år</span><span class="value" id="s_cfAr">—</span></div>
+      </div>
+
+      <h2>Oppussingsanalyse</h2>
+      <div class="subcard">
+        <div class="result"><span class="label">Vedlikehold (fradrag år 1)</span><span class="value" id="o_vedl">—</span></div>
+        <div class="result"><span class="label">Påkostning (fradrag ved salg)</span><span class="value" id="o_pak">—</span></div>
+        <div class="result"><span class="label">Tapt leie under oppussing</span><span class="value" id="o_tapt">—</span></div>
+        <div class="result"><span class="label">Totalt utlegg</span><span class="value" id="o_totKost">—</span></div>
+        <div class="result"><span class="label">Skattebesparelse år 1 (vedlikehold × 22 %)</span><span class="value" id="o_skattVedl">—</span></div>
+        <div class="result"><span class="label">Skattebesparelse ved salg (påkostning × 22 %)</span><span class="value" id="o_skattPak">—</span></div>
+        <div class="result"><span class="label">Verdiøkning</span><span class="value" id="o_verdi">—</span></div>
+        <div class="result"><span class="label">Verdi-ROI</span><span class="value" id="o_verdiRoi">—</span></div>
+        <div class="result"><span class="label">Årlig CF-forbedring (før skatt)</span><span class="value" id="o_cfDelta">—</span></div>
+        <div class="result"><span class="label">Payback (år)</span><span class="value" id="o_payback">—</span></div>
+        <div class="result big"><span class="label">Vurdering oppussing</span><span class="value" id="o_verdict">—</span></div>
+      </div>
+
+      <h2>Langsikt <span id="horLabel" style="color:#6ea8ff; font-weight:400;"></span></h2>
+      <div class="subcard">
+        <div class="result"><span class="label">Salgspris</span><span class="value" id="l_salgspris">—</span></div>
+        <div class="result"><span class="label">Meglerkostnader</span><span class="value" id="l_megler">—</span></div>
+        <div class="result"><span class="label">Lånesaldo ved salg</span><span class="value" id="l_saldo">—</span></div>
+        <div class="result"><span class="label">Gevinst (skattegrunnlag)</span><span class="value" id="l_gevinst">—</span></div>
+        <div class="result"><span class="label">Gevinstskatt (22 %)</span><span class="value" id="l_gevinstSkatt">—</span></div>
+        <div class="result big"><span class="label">Netto EK ved salg</span><span class="value" id="l_nettoEK">—</span></div>
+        <div class="result"><span class="label">Kumulativ CF etter skatt</span><span class="value" id="l_kumCf">—</span></div>
+        <div class="result big"><span class="label">Total netto avkastning</span><span class="value" id="l_tot">—</span></div>
+        <div class="result big"><span class="label">Årlig IRR</span><span class="value" id="l_irr">—</span></div>
+      </div>
+
+      <details>
+        <summary>Vis år-for-år tabell</summary>
+        <div id="yoyTable" style="overflow-x:auto;"></div>
+      </details>
+
+      <div id="verdict" class="verdict" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// FINN-PARSER
+// =====================================================
+function parseFinn(raw) {
+  // Normaliser non-breaking space til vanlig space
+  const text = raw.replace(/\u00A0/g, ' ');
+
+  const findAmount = (patterns) => {
+    for (const p of patterns) {
+      const m = text.match(p);
+      if (m && m[1]) {
+        const cleaned = m[1].replace(/[^\d]/g, '');
+        if (cleaned) return parseInt(cleaned, 10);
+      }
+    }
+    return null;
+  };
+
+  return {
+    prisantydning: findAmount([
+      /Prisantydning[^0-9]{0,20}([0-9][0-9\s.]{4,})/i,
+    ]),
+    totalpris: findAmount([
+      /Totalpris[^0-9]{0,20}([0-9][0-9\s.]{4,})/i,
+    ]),
+    omkostninger: findAmount([
+      /Omkostninger[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+    ]),
+    felleskost: findAmount([
+      /Felleskost\.?\s*\/\s*mnd\.?[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+      /Felleskostnader[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+      /Felleskost[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+    ]),
+    kommunale: findAmount([
+      /Kommunale\s+avg\.?[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+      /Kommunale\s+avgifter[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+    ]),
+    eiendomsskatt: findAmount([
+      /Eiendomsskatt[^0-9]{0,20}([0-9][0-9\s.]{2,})/i,
+    ]),
+    // Internt bruksareal (BRA-i) — faktisk boareal, erstatter gamle P-rom
+    braI: findAmount([
+      /Internt\s+bruksareal[^0-9]{0,20}([0-9]{2,4})/i,
+      /BRA-i[^0-9]{0,20}([0-9]{2,4})/i,
+    ]),
+    // Totalt bruksareal (BRA) — eksklusiv "Internt" og "Eksternt" prefiks
+    bra: findAmount([
+      /(?<!Internt\s)(?<!Eksternt\s)Bruksareal[^0-9]{0,20}([0-9]{2,4})/i,
+      /\bBRA(?!-)[^0-9]{0,20}([0-9]{2,4})/i,
+    ]),
+    // Eksternt bruksareal (BRA-e) — bod/balkong/etc. Ofte 1-2 sifre (4 m², 8 m²)
+    braE: findAmount([
+      /Eksternt\s+bruksareal[^0-9]{0,10}([0-9]{1,4})/i,
+      /BRA-e[^0-9]{0,10}([0-9]{1,4})/i,
+    ]),
+    byggeaar: findAmount([
+      /Byggeår[^0-9]{0,20}([0-9]{4})/i,
+    ]),
+  };
+}
+
+function parseFinnClick() {
+  const raw = document.getElementById('finnText').value;
+  const res = document.getElementById('finnResult');
+  res.style.display = 'block';
+
+  if (!raw.trim()) {
+    res.innerHTML = '<div style="color:#f87171; font-size:12.5px;">Lim inn tekst fra FINN-annonsen først.</div>';
+    return;
+  }
+
+  const d = parseFinn(raw);
+  const kjopspris = d.totalpris || d.prisantydning;
+  const kommunaleTotal = (d.kommunale || 0) + (d.eiendomsskatt || 0);
+
+  // Reset parser-kontrollerte felter først, slik at enebolig uten felleskost
+  // ikke arver 3500 kr fra forrige leilighet
+  document.getElementById('felleskost').value = 0;
+  document.getElementById('kommunale').value = 0;
+
+  const rows = [
+    ['Prisantydning',     d.prisantydning, 'kr'],
+    ['Omkostninger',      d.omkostninger,  'kr'],
+    ['Totalpris',         d.totalpris,     'kr'],
+    ['Felleskost/mnd',    d.felleskost,    'kr'],
+    ['Kommunale/år',      d.kommunale,     'kr'],
+    ['Eiendomsskatt/år',  d.eiendomsskatt, 'kr'],
+    ['Internt bruksareal', d.braI,         'm²'],
+    ['Totalt bruksareal',  d.bra,          'm²'],
+    ['Eksternt bruksareal',d.braE,         'm²'],
+    ['Byggeår',           d.byggeaar,      ''],
+  ];
+  const fmt = (v, unit) => v === null
+    ? '<span class="miss">—</span>'
+    : '<span class="hit">' + v.toLocaleString('no-NO') + (unit ? ' ' + unit : '') + '</span>';
+
+  let html = '<div class="finn-preview">' +
+    rows.map(r => '<div class="prow"><span>' + r[0] + '</span>' + fmt(r[1], r[2]) + '</div>').join('') +
+    '</div>';
+
+  // Autofyll
+  const applied = [];
+  if (kjopspris) {
+    document.getElementById('kjopspris').value = kjopspris;
+    applied.push('kjøpspris (' + (d.totalpris ? 'totalpris' : 'prisantydning') + ')');
+  }
+  if (d.felleskost) {
+    document.getElementById('felleskost').value = d.felleskost;
+    applied.push('felleskost');
+  }
+  if (kommunaleTotal) {
+    document.getElementById('kommunale').value = kommunaleTotal;
+    applied.push('kommunale' + (d.eiendomsskatt ? ' (inkl. eiendomsskatt)' : ''));
+  }
+
+  if (applied.length) {
+    html += '<div style="margin-top:10px; color:#4ade80; font-size:12.5px;">✓ Fylt inn: ' + applied.join(', ') + '. Juster manuelt om trengs, trykk så Beregn.</div>';
+  } else {
+    html += '<div style="margin-top:10px; color:#f87171; font-size:12.5px;">Ingen felter funnet. Sjekk at du limte inn hele annonsen (inkl. "Nøkkelinfo"/"Kostnader"-seksjonen).</div>';
+  }
+
+  res.innerHTML = html;
+}
+
+// =====================================================
+// HJELPEFUNKSJONER
+// =====================================================
+function num(id)  { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+function bool(id) { return document.getElementById(id).checked; }
+function kr(n)    { return Math.round(n).toLocaleString('no-NO') + ' kr'; }
+function pct(n)   { return n.toFixed(2) + ' %'; }
+
+function setVal(id, text, klass) {
+  const el = document.getElementById(id); if (!el) return;
+  el.textContent = text;
+  el.classList.remove('positive', 'negative', 'neutral');
+  if (klass) el.classList.add(klass);
+}
+function signClass(n, zeroOk) {
+  if (n > 0) return 'positive';
+  if (n < 0) return 'negative';
+  return zeroOk ? 'positive' : 'neutral';
+}
+
+// =====================================================
+// ANNUITETSLÅN
+// =====================================================
+function annuitet(lan, arligRentePct, antallAr) {
+  const r = (arligRentePct / 100) / 12;
+  const n = antallAr * 12;
+  if (r === 0) return lan / n;
+  return lan * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+}
+
+// Regn rente og saldo for ETT år, fra gitt startsaldo
+// Returnerer: { rente, avdrag, nySaldo }
+function arligRenteOgAvdrag(startSaldo, termin, arligRentePct) {
+  const r = (arligRentePct / 100) / 12;
+  let saldo = startSaldo;
+  let totRente = 0, totAvdrag = 0;
+  for (let i = 0; i < 12; i++) {
+    const rentebelop = saldo * r;
+    const avdrag = Math.min(termin - rentebelop, saldo);
+    totRente += rentebelop;
+    totAvdrag += avdrag;
+    saldo = Math.max(0, saldo - avdrag);
+  }
+  return { rente: totRente, avdrag: totAvdrag, nySaldo: saldo };
+}
+
+// =====================================================
+// IRR (bisection — robust nok for våre behov)
+// cashflows[0] = negativt (initial investering)
+// cashflows[1..N] = årlige returns, siste inkluderer salgsprovenu
+// =====================================================
+function irr(cashflows) {
+  const npv = (r) => cashflows.reduce((s, cf, t) => s + cf / Math.pow(1 + r, t), 0);
+  let low = -0.999, high = 5.0;
+  // Sjekk om løsningen er innenfor
+  if (npv(low) * npv(high) > 0) return null;
+  for (let i = 0; i < 200; i++) {
+    const mid = (low + high) / 2;
+    const v = npv(mid);
+    if (Math.abs(v) < 0.01) return mid;
+    if (npv(low) * v < 0) high = mid; else low = mid;
+  }
+  return (low + high) / 2;
+}
+
+// =====================================================
+// SNAPSHOT (år 1) — for visning før/etter
+// =====================================================
+function tilstand(leieMnd, vakansPct, driftMnd, termin, grunnlagYield) {
+  const leieEff    = leieMnd * (1 - vakansPct / 100);
+  const totKost    = driftMnd + termin;
+  const cfMnd      = leieEff - totKost;
+  const cfAr       = cfMnd * 12;
+  const arligLeie  = leieEff * 12;
+  const arligDrift = driftMnd * 12;
+  const nettoDrift = arligLeie - arligDrift;
+  const bruttoY    = grunnlagYield > 0 ? (arligLeie  / grunnlagYield) * 100 : 0;
+  const nettoY     = grunnlagYield > 0 ? (nettoDrift / grunnlagYield) * 100 : 0;
+  const breakeven  = vakansPct < 100 ? totKost / (1 - vakansPct / 100) : 0;
+  return { leieEff, totKost, cfMnd, cfAr, arligLeie, arligDrift, nettoDrift, bruttoY, nettoY, breakeven };
+}
+
+// =====================================================
+// MODUS-HÅNDTERING
+// =====================================================
+let currentMode = 'ren';   // 'ren' eller 'bo-selv'
+
+function setMode(mode) {
+  currentMode = mode;
+  document.body.classList.toggle('mode-bo-selv', mode === 'bo-selv');
+  document.body.classList.toggle('mode-ren', mode === 'ren');
+  document.getElementById('modeRen').classList.toggle('active', mode === 'ren');
+  document.getElementById('modeBoSelv').classList.toggle('active', mode === 'bo-selv');
+  calc();
+}
+
+// =====================================================
+// HOVEDBEREGNING
+// =====================================================
+function calc() {
+  // --- Input ---
+  const kjopspris    = num('kjopspris');
+  const egenkapital  = num('egenkapital');
+  const rente        = num('rente');
+  const nedbetAr     = num('nedbetalingstid');
+
+  const leieFoer     = num('leie');
+  const leieEtter    = num('leieEtter');
+  const vakansPct    = num('vakans');
+
+  const felleskost   = num('felleskost');
+  const kommunale    = num('kommunale');
+  const forsikring   = num('forsikring');
+  const vedlikPct    = num('vedlikehold');
+
+  const oppVedlikehold = num('oppVedlikehold');  // fradragsberettiget år 1
+  const oppPakostning  = num('oppPakostning');   // legges til inngangsverdi
+  const oppussing      = oppVedlikehold + oppPakostning;  // total oppussingskostnad
+  const verdiokning  = num('verdiokning');
+  const monthOff     = num('monthOff');
+
+  const prisstigning = num('prisstigning');
+  const leieOkning   = num('leieOkning');
+  const horisont     = Math.max(1, num('horisont'));
+  const meglerkost   = num('meglerkost');
+
+  const skattPaInput   = bool('skattPa');
+  const skattesats   = num('skattesats');
+
+  const minYield     = num('minYield');
+  const minIRR       = num('minIRR');
+  const minCashflow  = num('minCashflow');
+  const maksBelaning = num('maksBelaning');
+
+  // --- Modus-spesifikke felter ---
+  const isBoSelv     = currentMode === 'bo-selv';
+  const utleieandel  = isBoSelv ? Math.max(1, Math.min(100, num('utleieandel'))) : 100;
+  const andel        = utleieandel / 100;       // 1.0 i ren-modus
+  const overstyrSekundaer = isBoSelv ? bool('overstyrSekundaer') : false;
+  // Skattefri leieinntekt hvis utleieandel < 50 % i bo-selv-modus (lovregelen)
+  const erSkattefri  = isBoSelv && utleieandel < 50;
+  // Effektiv skatt-på: brukerens haken AND ikke skattefri
+  const skattPa      = skattPaInput && !erSkattefri;
+  // Salgsbeskatning: primærbolig (0) i bo-selv, sekundærbolig (22%) i ren — overstyrbar
+  const salgSomSekundaer = !isBoSelv || overstyrSekundaer;
+
+  // --- Finansiering ---
+  const lan            = Math.max(0, kjopspris - egenkapital);
+  const belaningsgrad  = kjopspris > 0 ? (lan / kjopspris) * 100 : 0;
+  const termin         = annuitet(lan, rente, nedbetAr);
+
+  // --- Drift ---
+  const vedlikMnd      = (kjopspris * vedlikPct / 100) / 12;
+  const driftMnd       = felleskost + kommunale/12 + forsikring/12 + vedlikMnd;
+
+  // Andel-justerte verdier (= full verdi i ren-modus, andel av total i bo-selv)
+  // Investerings-perspektiv: utleiedelens andel av drift + termin
+  const driftMndA      = driftMnd * andel;
+  const terminA        = termin * andel;
+
+  // --- Tapte leier under oppussing + total investert ---
+  const tapteLeier     = leieFoer * (1 - vakansPct/100) * monthOff;
+  const totalInvestert = egenkapital + oppussing + tapteLeier;
+
+  // --- Snapshot FØR --- (utleiedelens cashflow; yield mot HELE kjøpspris)
+  const foer = tilstand(leieFoer,  vakansPct, driftMndA, terminA, kjopspris);
+
+  // --- Snapshot ETTER (yield basert på total investert, ikke ny verdi) ---
+  const etter = tilstand(leieEtter, vakansPct, driftMndA, terminA, kjopspris + oppussing);
+
+  // --- Rente år 1 (eksakt på FULL lån) ---
+  const ar1 = arligRenteOgAvdrag(lan, termin, rente);
+
+  // --- Skatt år 1 (kun utleiedelens andel av rente er fradragsberettiget) ---
+  const skattbarAr1 = etter.arligLeie - etter.arligDrift - (ar1.rente * andel) - oppVedlikehold;
+  const skattAr1    = skattPa ? skattbarAr1 * (skattesats / 100) : 0;
+  const cfEtterSkattAr1  = etter.cfAr  - skattAr1;
+  const cfEtterSkattMnd1 = cfEtterSkattAr1 / 12;
+
+  // =====================================================
+  // LANGSIKT: år-for-år simulering
+  // =====================================================
+  // t=0: kjøp + oppussing ferdig. Startverdi = kjøpspris + verdiøkning.
+  // t=1..N: årlig CF etter skatt. Leie og verdi øker med X%/år. Lån reduseres.
+  // t=N (siste år): legg til salgsprovenu.
+  // =====================================================
+  const nyVerdi0 = kjopspris + verdiokning;
+  let saldo = lan;
+  let kumCf = 0;
+
+  const yoy = [];           // rader til tabell
+  const cfSeries = [-totalInvestert];  // for IRR
+
+  for (let t = 1; t <= horisont; t++) {
+    const leieMndAr     = leieEtter * Math.pow(1 + leieOkning / 100, t - 1);
+    const leieArlig     = leieMndAr * (1 - vakansPct/100) * 12;
+    const driftArlig    = driftMnd * 12 * andel;    // andel-justert (1.0 i ren-modus)
+    const { rente: renteFull, avdrag: avdragFull, nySaldo } = arligRenteOgAvdrag(saldo, termin, rente);
+    const renteAr       = renteFull * andel;
+    const avdragAr      = avdragFull * andel;
+    const cfForSkatt    = leieArlig - driftArlig - renteAr - avdragAr;
+    // Vedlikehold trekkes fra skattbar inntekt KUN i år 1 (antatt utført ved kjøp)
+    const vedlFradrag   = t === 1 ? oppVedlikehold : 0;
+    const skattbar      = leieArlig - driftArlig - renteAr - vedlFradrag;
+    const skattAr       = skattPa ? skattbar * (skattesats / 100) : 0;
+    const cfEtterSkatt  = cfForSkatt - skattAr;
+    const verdiSlutt    = nyVerdi0 * Math.pow(1 + prisstigning / 100, t);
+
+    kumCf += cfEtterSkatt;
+    saldo = nySaldo;
+
+    let cfIdet = cfEtterSkatt;
+    // Salg i siste år — legg salgsprovenu til slutt-CF
+    if (t === horisont) {
+      // ikke lagre her; gjør det etter loopen
+    }
+
+    yoy.push({
+      t, leie: leieArlig, drift: driftArlig, rente: renteAr, avdrag: avdragAr,
+      cfForSkatt, skatt: skattAr, cfEtterSkatt,
+      kumCf, saldo, verdi: verdiSlutt
+    });
+    cfSeries.push(cfEtterSkatt);
+  }
+
+  // Salg i siste år
+  const salgspris      = nyVerdi0 * Math.pow(1 + prisstigning / 100, horisont);
+  const meglerKr       = salgspris * (meglerkost / 100);
+  const saldoSalg      = saldo;
+  // Kun påkostning legges til inngangsverdi. Vedlikehold er allerede fradratt år 1.
+  const inngangsverdi  = kjopspris + oppPakostning;
+  const gevinst        = salgspris - meglerKr - inngangsverdi;
+  // Salgsskatt: 0 hvis primærbolig (bo-selv uten overstyring), ellers 22 %
+  const gevinstSkatt   = (skattPaInput && salgSomSekundaer) ? Math.max(0, gevinst) * (skattesats / 100) : 0;
+  // Tap ved salg gir ikke alltid full fradrag — konservativt: ingen skatterabatt ved salgstap
+  const nettoEK        = salgspris - meglerKr - saldoSalg - gevinstSkatt;
+
+  // Legg salgsprovenu til siste års cashflow (for IRR)
+  cfSeries[horisont] += nettoEK;
+
+  const totAvkastning  = nettoEK + kumCf - totalInvestert;
+  const irrVerdi       = irr(cfSeries);
+
+  // --- Oppussingsanalyse ---
+  const verdiRoi = oppussing > 0 ? ((verdiokning - oppussing) / oppussing) * 100 : 0;
+  const cfDelta  = etter.cfAr - foer.cfAr;
+  const payback  = cfDelta > 0 ? (oppussing + tapteLeier) / cfDelta : Infinity;
+
+  // =====================================================
+  // RENDER
+  // =====================================================
+
+  // --- Bolig-perspektiv (kun synlig i bo-selv-modus via CSS) ---
+  // Hva betaler du faktisk ut av lommen for å bo her?
+  const bsTotMnd   = driftMnd + termin;                  // FULL drift + FULL termin
+  const bsLeieMnd  = leieEtter * (1 - vakansPct/100);    // Utleiedelens netto leie
+  const bsNettoMnd = bsTotMnd - bsLeieMnd;               // Hva du faktisk legger ut (positivt = utlegg)
+  const bsDekning  = bsTotMnd > 0 ? (bsLeieMnd / bsTotMnd) * 100 : 0;
+  setVal('bs_totMnd',   kr(bsTotMnd));
+  setVal('bs_leieMnd',  kr(bsLeieMnd), 'positive');
+  setVal('bs_nettoMnd', kr(bsNettoMnd), bsNettoMnd <= 0 ? 'positive' : 'negative');
+  setVal('bs_dekning',  pct(bsDekning), bsDekning >= 100 ? 'positive' : (bsDekning >= 70 ? 'neutral' : 'negative'));
+  document.getElementById('skattefriBadge').style.display = erSkattefri ? 'inline-block' : 'none';
+
+  setVal('r_lan',         kr(lan));
+  setVal('r_belaning',    pct(belaningsgrad), belaningsgrad <= maksBelaning ? 'positive' : 'negative');
+  setVal('r_ek',          kr(totalInvestert));
+  setVal('r_terminbelop', kr(termin));
+  setVal('r_renteAr1',    kr(ar1.rente));
+  setVal('r_renteAndel',  kr(ar1.rente * andel));
+
+  setVal('f_cfMnd',   kr(foer.cfMnd), signClass(foer.cfMnd, true));
+  setVal('f_cfAr',    kr(foer.cfAr),  signClass(foer.cfAr,  true));
+  setVal('f_bruttoY', pct(foer.bruttoY));
+  setVal('f_nettoY',  pct(foer.nettoY), foer.nettoY >= minYield ? 'positive' : 'negative');
+  setVal('f_be',      kr(foer.breakeven));
+
+  setVal('e_cfMnd',   kr(etter.cfMnd), signClass(etter.cfMnd, true));
+  setVal('e_cfAr',    kr(etter.cfAr),  signClass(etter.cfAr,  true));
+  setVal('e_bruttoY', pct(etter.bruttoY));
+  setVal('e_nettoY',  pct(etter.nettoY), etter.nettoY >= minYield ? 'positive' : 'negative');
+  setVal('e_be',      kr(etter.breakeven));
+
+  document.getElementById('skattBlokk').style.opacity = skattPa ? '1' : '0.45';
+  setVal('s_skattbar', kr(skattbarAr1), skattbarAr1 >= 0 ? 'neutral' : 'positive');
+  const skattLabel = skattAr1 >= 0 ? 'Du betaler ' + kr(skattAr1) : 'Besparelse ' + kr(-skattAr1);
+  setVal('s_skatt',  skattLabel, skattAr1 <= 0 ? 'positive' : 'negative');
+  setVal('s_cfMnd',  kr(cfEtterSkattMnd1), signClass(cfEtterSkattMnd1, true));
+  setVal('s_cfAr',   kr(cfEtterSkattAr1),  signClass(cfEtterSkattAr1,  true));
+
+  setVal('o_vedl',     kr(oppVedlikehold));
+  setVal('o_pak',      kr(oppPakostning));
+  setVal('o_tapt',     kr(tapteLeier));
+  setVal('o_totKost',  kr(oppussing + tapteLeier));
+  setVal('o_skattVedl', kr(oppVedlikehold * (skattesats / 100) * (skattPa ? 1 : 0)),
+                        oppVedlikehold > 0 && skattPa ? 'positive' : null);
+  setVal('o_skattPak',  kr(oppPakostning  * (skattesats / 100) * (skattPa ? 1 : 0)),
+                        oppPakostning  > 0 && skattPa ? 'positive' : null);
+  setVal('o_verdi',    kr(verdiokning));
+  setVal('o_verdiRoi', oppussing > 0 ? pct(verdiRoi) : '—', oppussing > 0 ? signClass(verdiRoi, true) : null);
+  setVal('o_cfDelta',  kr(cfDelta), signClass(cfDelta, true));
+  setVal('o_payback',  oppussing > 0 && isFinite(payback)
+                       ? payback.toFixed(1) + ' år'
+                       : (oppussing > 0 ? '∞' : '—'),
+                       oppussing > 0 && isFinite(payback) && payback <= 10 ? 'positive'
+                         : (oppussing > 0 ? 'negative' : null));
+
+  if (oppussing <= 0) {
+    setVal('o_verdict', '—');
+  } else {
+    const verdiOk = verdiokning >= oppussing;
+    const cfOk    = cfDelta > 0;
+    if (verdiOk && cfOk)       setVal('o_verdict', '✅ Lønnsomt',      'positive');
+    else if (verdiOk || cfOk)  setVal('o_verdict', '⚠️ Marginalt',     'neutral');
+    else                        setVal('o_verdict', '❌ Ikke lønnsomt', 'negative');
+  }
+
+  document.getElementById('horLabel').textContent = `(${horisont} år)`;
+  setVal('l_salgspris',   kr(salgspris));
+  setVal('l_megler',      kr(meglerKr));
+  setVal('l_saldo',       kr(saldoSalg));
+  setVal('l_gevinst',     kr(gevinst), signClass(gevinst, true));
+  setVal('l_gevinstSkatt',kr(gevinstSkatt));
+  setVal('l_nettoEK',     kr(nettoEK),        signClass(nettoEK, true));
+  setVal('l_kumCf',       kr(kumCf),          signClass(kumCf, true));
+  setVal('l_tot',         kr(totAvkastning),  signClass(totAvkastning, true));
+  setVal('l_irr',         irrVerdi === null ? 'n/a' : pct(irrVerdi * 100),
+                          irrVerdi === null ? null : (irrVerdi * 100 >= minIRR ? 'positive' : 'negative'));
+
+  // --- År-for-år tabell ---
+  let html = `<table class="yoy">
+    <thead><tr>
+      <th style="text-align:left">År</th>
+      <th>Leie</th>
+      <th>Drift</th>
+      <th>Renter</th>
+      <th>Avdrag</th>
+      <th>CF e/skatt</th>
+      <th>Kum CF</th>
+      <th>Saldo</th>
+      <th>Verdi</th>
+    </tr></thead><tbody>`;
+  for (const row of yoy) {
+    const cfCls = row.cfEtterSkatt >= 0 ? 'pos' : 'neg';
+    const kCls  = row.kumCf >= 0 ? 'pos' : 'neg';
+    html += `<tr>
+      <td class="yr">År ${row.t}</td>
+      <td>${kr(row.leie)}</td>
+      <td>${kr(row.drift)}</td>
+      <td>${kr(row.rente)}</td>
+      <td>${kr(row.avdrag)}</td>
+      <td class="${cfCls}">${kr(row.cfEtterSkatt)}</td>
+      <td class="${kCls}">${kr(row.kumCf)}</td>
+      <td>${kr(row.saldo)}</td>
+      <td>${kr(row.verdi)}</td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById('yoyTable').innerHTML = html;
+
+  // =====================================================
+  // VERDICT (to-dimensjonal: kortsikt CF + langsikt IRR)
+  // =====================================================
+  const dealbreakers = [];
+  if (belaningsgrad > maksBelaning) {
+    dealbreakers.push(`Belåningsgrad ${pct(belaningsgrad)} over maks (${pct(maksBelaning)})`);
+  }
+  if (oppussing > 0 && verdiokning < oppussing && cfDelta <= 0) {
+    dealbreakers.push(`Oppussing skaper verken verdi eller cashflow`);
+  }
+  if (irrVerdi !== null && irrVerdi * 100 < 0) {
+    dealbreakers.push(`Negativ IRR (${pct(irrVerdi * 100)}) — du taper på lang sikt også`);
+  }
+
+  const advarsler = [];
+  if (cfEtterSkattMnd1 < minCashflow) {
+    advarsler.push(`Månedlig CF ${kr(cfEtterSkattMnd1)} under krav (${kr(minCashflow)}) — du må ha råd til å bære dette`);
+  }
+  if (irrVerdi !== null && irrVerdi * 100 < minIRR && irrVerdi * 100 >= 0) {
+    advarsler.push(`IRR ${pct(irrVerdi * 100)} under krav (${pct(minIRR)}) — bedre å sette pengene i indeksfond`);
+  }
+  if (etter.nettoY < minYield) {
+    advarsler.push(`Netto yield ${pct(etter.nettoY)} under krav (${pct(minYield)})`);
+  }
+
+  const vd = document.getElementById('verdict');
+  vd.style.display = 'block';
+  vd.classList.remove('good', 'warn', 'bad');
+  const buildList = (arr) => '<ul class="reason">' + arr.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+
+  const irrPct = irrVerdi === null ? 0 : irrVerdi * 100;
+
+  if (dealbreakers.length > 0) {
+    vd.classList.add('bad');
+    vd.innerHTML = `<div class="title">❌ STYR UNNA</div>${buildList(dealbreakers.concat(advarsler))}`;
+  } else if (advarsler.length === 0) {
+    vd.classList.add('good');
+    vd.innerHTML = `<div class="title">✅ KJØP</div>
+      <div>CF ${kr(cfEtterSkattMnd1)}/mnd • IRR ${pct(irrPct)} over ${horisont} år • Total netto ${kr(totAvkastning)}</div>`;
+  } else if (irrPct >= minIRR && cfEtterSkattMnd1 < 0) {
+    // Klassisk norsk case: månedlig tap OK pga verdistigning
+    vd.classList.add('good');
+    vd.innerHTML = `<div class="title">💰 LANGSIKTIG KJØP</div>
+      <div>Negativ cashflow, men IRR ${pct(irrPct)} over ${horisont} år slår kravet ditt.</div>
+      ${buildList(advarsler)}`;
+  } else {
+    vd.classList.add('warn');
+    vd.innerHTML = `<div class="title">⚠️ VURDER NØYE</div>${buildList(advarsler)}`;
+  }
+}
+
+// =====================================================
+// NULLSTILL EIENDOMSSPESIFIKKE FELTER
+// =====================================================
+// Tømmer alt som gjelder den konkrete eiendommen.
+// Behold: Skatt, Investeringskrav, Langsiktig marked (Kristians personlige antagelser).
+function resetAll() {
+  const CLEAR_FIELDS = [
+    // Kjøp & finansiering (behold: rente, nedbetalingstid)
+    'kjopspris', 'egenkapital',
+    // Leie (behold: vakans)
+    'leie', 'leieEtter',
+    // Driftskostnader (behold: forsikring, vedlikehold%)
+    'felleskost', 'kommunale',
+    // Oppussing
+    'oppVedlikehold', 'oppPakostning', 'verdiokning', 'monthOff'
+  ];
+  CLEAR_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Tøm FINN-paste området
+  const ft = document.getElementById('finnText');
+  if (ft) ft.value = '';
+  const fr = document.getElementById('finnResult');
+  if (fr) { fr.style.display = 'none'; fr.innerHTML = ''; }
+  // Regn ut på nytt (alle clear-felter behandles som 0)
+  calc();
+}
+
+// Kjør ved lasting
+calc();
+</script>
+</body>
+</html>
